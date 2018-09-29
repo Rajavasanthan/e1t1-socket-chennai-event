@@ -17,8 +17,10 @@
   },
   "homepage": "https://github.com/Rajavasanthan/e1t1-socket-chennai-event#readme",
   "dependencies": {
+    "connect-mongo": "^2.0.1",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
+    "express-session": "^1.15.6",
     "mongoose": "^5.3.0"
   }
 }

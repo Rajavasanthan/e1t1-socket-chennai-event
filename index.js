@@ -34,6 +34,12 @@ passport.deserializeUser((id, done) => {
     });
 });
 
+function isLoggedIn(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    return res.redirect('/register');
+}
 
 passport.use(new FacebookStatergy({
     clientID: process.env.FB_CLIENT_ID || '528230584255234',
@@ -65,7 +71,7 @@ passport.use(new FacebookStatergy({
     });
 }));
 
-app.get("/", function (req, res) {
+app.get("/",isLoggedIn,function (req, res) {
     res.send("Hello World!");
 });
 

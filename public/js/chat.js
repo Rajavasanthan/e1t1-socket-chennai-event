@@ -62,6 +62,10 @@ $(document).ready(function () {
 
     });
 
+    socket.on('newMessageRecived', function (message) {
+        populateMessage(message);
+    });
+
     socket.on('newMemberOnline', function (friend) {
         console.log("newMemberOnline");
         $("#user-" + friend._id + " > .wrap > span").removeClass('Offline');
@@ -72,6 +76,18 @@ $(document).ready(function () {
         console.log("newMemberOnline")
         $("#user-" + friend._id + " > .wrap > span").removeClass('Online');
         $("#user-" + friend._id + " > .wrap > span").addClass('Offline');
+    });
+
+    $('.submit').click(function () {
+        newMessage();
+        return false;
+    });
+    
+    $(window).on('keydown', function (e) {
+        if (e.which == 13) {
+            newMessage();
+            return false;
+        }
     });
 })
 
@@ -91,6 +107,7 @@ function displayMessage(message) {
 }
 
 function populateMessage(messageData) {
+    console.log(messageData);
     if (messageData.length == undefined) {
         displayMessage(messageData);
     } else {
@@ -99,6 +116,21 @@ function populateMessage(messageData) {
         }, this);
 
     }
+}
+
+
+
+function newMessage(){
+    if ($.trim(message) == '') {
+        return false;
+    }
+
+    socket.emit('newMessage', {
+        to: $("#current-friend-id").val(),
+        message: $("#message").val()
+    }, function (confirmation) {
+        populateMessage(confirmation);
+    });
 }
 
 function getMessages(friendId, friendFullName, friendImage) {

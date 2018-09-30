@@ -53,38 +53,92 @@ io.on('connection', function (socket) {
             })
     }
 
-    app.get("/get_msg_by_friendid/:friendId",function(req,res){
+    app.get("/get_msg_by_friendid/:friendId", function (req, res) {
         Message.find({
             participents: {
                 $all: [req.user._id, req.params.friendId]
             }
         })
-        .populate('sentBy',{ _id: 1, userImage: 1 })
-        .populate('recivedBy',{ _id: 1, userImage: 1 })
-        .exec()
-        .then((message) => {
-            return User.findByIdAndUpdate(req.user._id, { $set: { currentFriend: req.params.friendId } }).then((currentUser) => {
-                return { message }
-            });
-        })
-        .then((data) => {
-            res.json(data.message);
-        })
+            .populate('sentBy', { _id: 1, userImage: 1 })
+            .populate('recivedBy', { _id: 1, userImage: 1 })
+            .exec()
+            .then((message) => {
+                return User.findByIdAndUpdate(req.user._id, { $set: { currentFriend: req.params.friendId } }).then((currentUser) => {
+                    return { message }
+                });
+            })
+            .then((data) => {
+                res.json(data.message);
+            })
     });
     // io.to(socket.id).emit('newFriendRequest','You got new Friend request')
 
-    socket.on("disconnect", function () {
-        User.findByIdAndUpdate(socket.handshake.session.passport.user, { $set: { status: 'Offline', socketId: null } })
-            .populate('friends')
-            .then(function (user) {
-                console.log("User Logged Out");
-                user.friends.forEach(function (friend) {
-                    if (friend.socketId !== null) {
-                        console.log("newMemberOffline")
-                        io.to(friend.socketId).emit('newMemberOffline', user);
+    socket.on('newMessage', (message, callback) => {
+        var newMessage = new Message({
+            participents: [
+                socket.handshake.session.passport.user,
+                message.to
+            ],
+            message: message.message,
+            sentBy: socket.handshake.session.passport.user,
+            recivedBy: message.to
+        });
+
+        newMessage.save().then((savedMessage) => {
+
+            return Message.populate(savedMessage,
+                [{
+                    path: 'sentBy',
+                    select: {
+                        _id: 1,
+                        userImage: 1
                     }
-                }, this);
+                },
+                {
+                    path: 'recivedBy',
+                    select: {
+                        _id: 1,
+                        userImage: 1
+                    }
+                }]
+            ).then((populatedMessage) => {
+                // console.log(populatedMessage);
+                return populatedMessage
             })
+            callback("Done");
+        }).then((populatedMessage) => {
+            return User.findById(message.to)
+                .populate('currentFriend', { _id: 1, socketId: 1 })
+                .then((toUser) => {
+                    return { toUser, populatedMessage };
+                })
+        })
+            .then((toUserWithPopulatedMessage) => {
+                console.log(toUserWithPopulatedMessage.toUser.currentFriend);
+                if (toUserWithPopulatedMessage.toUser.currentFriend._id == socket.handshake.session.passport.user) {
+                    // console.log('Send Message');
+                    io.to(toUserWithPopulatedMessage.toUser.socketId).emit('newMessageRecived', toUserWithPopulatedMessage.populatedMessage);
+                } else {
+                    io.to(toUserWithPopulatedMessage.toUser.socketId).emit('updateUserList', toUserWithPopulatedMessage.populatedMessage);
+                }
+                callback(toUserWithPopulatedMessage.populatedMessage);
+            })
+    });
+
+    socket.on("disconnect", function () {
+        if (socket.handshake.session.passport) {
+            User.findByIdAndUpdate(socket.handshake.session.passport.user, { $set: { status: 'Offline', socketId: null } })
+                .populate('friends')
+                .then(function (user) {
+                    console.log("User Logged Out");
+                    user.friends.forEach(function (friend) {
+                        if (friend.socketId !== null) {
+                            console.log("newMemberOffline")
+                            io.to(friend.socketId).emit('newMemberOffline', user);
+                        }
+                    }, this);
+                })
+        }
     });
 });
 

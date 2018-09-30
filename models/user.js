@@ -18,7 +18,32 @@ const UserSchema = mongoose.Schema({
         type: String,
         default: ''
     },
-    fbTokens: Array
+    fbTokens: Array,
+    sentRequest : [
+        {
+            type : mongoose.Schema.Types.ObjectId,
+            ref : 'user'
+        }
+    ],
+    friendRequest : [
+        {
+            type : mongoose.Schema.Types.ObjectId,
+            ref : 'user'
+        }
+    ],
+    friends : [
+        {
+            type : mongoose.Schema.Types.ObjectId,
+            ref : 'user'
+        }
+    ],
+    socketId : {
+        type : String
+    },
+    currentFriend : {
+        type : mongoose.Schema.Types.ObjectId,
+        ref : 'user'
+    }
 });
 
 var User = mongoose.model("user", UserSchema);

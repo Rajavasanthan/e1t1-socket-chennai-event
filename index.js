@@ -1,6 +1,22 @@
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
+
+const socketIO = require('socket.io');
+const http = require('http');
+const server = http.createServer(app);
+const io = socketIO(server);
+
+io.on('connection',function(socket){
+    console.log("Connected");
+    console.log(socket.id);
+
+
+    socket.on("disconnect",function(){
+        console.log("Disconnected");
+    });
+});
+
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const FacebookStatergy = require('passport-facebook').Strategy;
@@ -11,6 +27,7 @@ var { User } = require('./models/user');
 const passport = require('passport');
 
 app.set('view engine', 'ejs');
+app.set('port', 3005);
 app.use(express.static('public'));
 
 var chatSession = session({
@@ -45,7 +62,7 @@ passport.use(new FacebookStatergy({
     clientID: process.env.FB_CLIENT_ID || '528230584255234',
     clientSecret: process.env.FB_SECRET || '527b5d836ce4adc0e453fda88415a939',
     profileFields: ['email', 'displayName', 'photos'],
-    callbackURL: process.env.FB_CALLBACK || 'http://localhost:3002/auth/facebook/callback',
+    callbackURL: process.env.FB_CALLBACK || 'http://localhost:' + app.get('port') + '/auth/facebook/callback',
     passReqToCallback: true,
     enableProof: true
 }, (req, token, refreshToken, profile, done) => {
@@ -71,8 +88,8 @@ passport.use(new FacebookStatergy({
     });
 }));
 
-app.get("/",isLoggedIn,function (req, res) {
-    res.send("Hello World!");
+app.get("/", isLoggedIn, function (req, res) {
+    res.render("chat");
 });
 
 app.get("/register", function (req, res) {
@@ -85,11 +102,17 @@ app.get('/auth/facebook', passport.authenticate('facebook', {
 
 app.get('/auth/facebook/callback', passport.authenticate('facebook', {
     successRedirect: '/',
-    failureRedirect: '/login'
+    failureRedirect: '/register'
 }));
 
-app.listen(3002, function () {
-    console.log("App listening in port 3002")
+app.get('/logout', (req, res) => {
+    req.logout();
+    req.session.destroy();
+    return res.redirect('/register');
+});
+
+server.listen(app.get('port'), function () {
+    console.log("App listening in port " + app.get('port'))
 });
 
 

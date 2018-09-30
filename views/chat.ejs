@@ -1,0 +1,124 @@
+<%- include('includes/header') %>
+    <div id="frame">
+        <div id="sidepanel">
+            <div id="profile">
+                <div class="wrap">
+                    <img id="profile-img" src="http://placehold.it/150x150" class="online" alt="" />
+                    <p>
+                        User Name
+                    </p>
+                    <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
+                    <div id="status-options">
+                        <ul>
+                            <li id="status-online" class="active">
+                                <span class="status-circle"></span>
+                                <p>Online</p>
+                            </li>
+                            <li id="status-away">
+                                <span class="status-circle"></span>
+                                <p>Away</p>
+                            </li>
+                            <li id="status-busy">
+                                <span class="status-circle"></span>
+                                <p>Busy</p>
+                            </li>
+                            <li id="status-offline">
+                                <span class="status-circle"></span>
+                                <p>Offline</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div id="expanded">
+                        <a href="/logout" class="logout" style="color:white">Logout</a>
+
+                    </div>
+                </div>
+            </div>
+            <div id="search">
+                <label for="">
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                </label>
+                <input type="text" placeholder="Search contacts..." id="search-filter" />
+            </div>
+            <div id="contacts">
+                <ul id="friends-search">
+
+
+                </ul>
+                <ul id="friend-request">
+
+
+                </ul>
+                <ul id="friends-list">
+                    <li class='contact' style='cursor:auto' id='search-1'>
+                        <div class='wrap'>
+                            <span class='contact-status'></span>
+                            <img src='http://placehold.it/150x150' alt='' />
+                            <div class='meta'>
+                                <p class='name'>Raj</p>
+                                <p class='preview'>Lets Chat</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class='contact' style='cursor:auto' id='search-1'>
+                        <div class='wrap'>
+                            <span class='contact-status'></span>
+                            <img src='http://placehold.it/150x150' alt='' />
+                            <div class='meta'>
+                                <p class='name'>Friend 2</p>
+                                <p class='preview'>Lets Chat</p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+        <div class="content">
+            <!-- <div id="welcome-screen" class="messages" style="text-align: center;min-height: 100%;max-height: 100%;">
+            <img src="images/welcome-logo.png" style="margin-top: 17%;">
+        </div> -->
+            <!-- <div id="chat-screen-loading" class="messages" style="text-align: center;min-height: 100%;max-height: 100%;">
+            <i class="fa fa-spinner fa-spin" aria-hidden="true" style="margin-top: 10%;"></i>
+        </div> -->
+            <div id="chat-screen" class="messages">
+                <div class="contact-profile">
+                    <img src="http://placehold.it/150x150" id="friend-image" alt="" />
+                    <p id="friend-name">Vasanth</p>
+                    <div class="social-media">
+                        <i class="fa fa-facebook" aria-hidden="true"></i>
+                        <i class="fa fa-twitter" aria-hidden="true"></i>
+                        <i class="fa fa-instagram" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <div class="messages">
+                    <ul id="message-list">
+                        <li class="replies">
+                            <img src="http://placehold.it/20x20" alt="" />
+                            <p>Hi</p>
+                        </li>
+                        <li class="sent">
+                            <img src="http://placehold.it/20x20" alt="" />
+                            <p>Hello</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="message-input">
+                    <form id="chat-form">
+                        <div class="wrap">
+                            <input type="hidden" value="0" id="current-friend-id" />
+                            <input type="text" placeholder="Write your message..." id="message" />
+                            <button class="submit">
+                                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="js/layout_js.js"></script>
+    <%- include('includes/footer') %>

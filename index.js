@@ -125,6 +125,93 @@ io.on('connection', function (socket) {
             })
     });
 
+    app.get('/add_friend/:toId', isLoggedIn, (req, res) => {
+        User.findById(req.user._id)
+            .exec()
+            .then((currentUser) => {
+                currentUser.sentRequest.push(req.params.toId);
+                currentUser.save();
+            })
+            .then(() => {
+                return User.findById(req.params.toId)
+                    .exec();
+            })
+            .then((toUser) => {
+                console.log(toUser);
+                toUser.friendRequest.push(req.user._id);
+                return toUser.save();
+            })
+            .then((toUser) => {
+                return User.findById(req.params.toId)
+                    .populate('friendRequest', { fullName: 1, _id: 1, userImage: 1, status: 1 })
+                    .exec();
+            })
+            .then((toUser) => {
+                console.log(toUser);
+                io.to(toUser.socketId).emit('newFriendRequest', toUser.friendRequest);
+                res.json("success");
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    });
+
+    app.get('/accept_friend/:friendId', (req, res) => {
+        User.findByIdAndUpdate(req.user._id, {
+            $pull: {
+                friendRequest: req.params.friendId
+            },
+            $push: {
+                friends: req.params.friendId
+            }
+        })
+
+            .then((currentUserUpdated) => {
+
+                return User.findByIdAndUpdate(req.params.friendId, {
+                    $pull: {
+                        sentRequest: req.user._id
+                    },
+                    $push: {
+                        friends: req.user._id
+                    }
+                })
+
+                    .then((friendUserUpdated) => {
+                        return { currentUserUpdated, friendUserUpdated };
+                    });
+            })
+            .then((updatedResult) => {
+                return User.findById(req.user._id)
+                    .populate('friends')
+                    .populate('friendRequest')
+                    .then((currentUser) => {
+                        return currentUser
+                    });
+            }).then((currentUser) => {
+                return User.findById(req.params.friendId)
+                    .populate('friends')
+                    .populate('friendRequest')
+                    .then((friendUser) => {
+                        return { currentUser, friendUser }
+                    });
+            })
+            .then((updatedResult) => {
+                console.log(updatedResult);
+                io.to(updatedResult.currentUser.socketId).emit('userList', updatedResult.currentUser.friends);
+                io.to(updatedResult.currentUser.socketId).emit('newFriendRequest', updatedResult.currentUser.friendRequest);
+
+                io.to(updatedResult.friendUser.socketId).emit('userList', updatedResult.friendUser.friends);
+                io.to(updatedResult.friendUser.socketId).emit('newFriendRequest', updatedResult.friendUser.friendRequest);
+                res.json('Success');
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+
+
+    });
+
     socket.on("disconnect", function () {
         if (socket.handshake.session.passport) {
             User.findByIdAndUpdate(socket.handshake.session.passport.user, { $set: { status: 'Offline', socketId: null } })
@@ -214,6 +301,61 @@ app.get('/logout', (req, res) => {
     req.logout();
     req.session.destroy();
     return res.redirect('/register');
+});
+
+app.get('/search_friends/:string?', isLoggedIn, (req, res) => {
+    if (req.params.string !== undefined) {
+
+
+        User.aggregate([
+            {
+                $match: {
+                    $and: [
+                        {
+                            _id: { $ne: req.user._id }
+                        },
+                        {
+                            fullName: new RegExp(req.params.string, 'i')
+                        },
+                        {
+                            friends: { $nin: [req.user._id] }
+                        }
+                    ]
+                }
+            },
+            {
+                $addFields: {
+                    requestSent: {
+                        $cond: [
+                            {
+                                $in: [req.user._id, "$friendRequest"]
+                            },
+                            1,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    fullName: 1,
+                    userImage: 1,
+                    status: 1,
+                    requestSent: 1
+                }
+            }
+        ]).collation('users')
+            .then((result) => {
+                console.log(result);
+                res.json(result);
+            }).catch((err) => {
+                console.log(err);
+            });
+
+    } else {
+        res.json([]);
+    }
 });
 
 server.listen(app.get('port'), function () {

@@ -36,25 +36,36 @@ io.use(sharedSession(chatSession, {
 
 io.on('connection', function (socket) {
     console.log("Connected");
-    if(socket.handshake.session.passport){
+    if (socket.handshake.session.passport) {
         User.findByIdAndUpdate(socket.handshake.session.passport.user, { $set: { status: 'Online', socketId: socket.id } })
-        .populate('friends')
-        .populate('friendRequest')
-        .then(function (user) {
-            io.to(socket.id).emit('userList', user.friends);
-            io.to(socket.id).emit('newFriendRequest', user.friendRequest);
-            user.friends.forEach(function (friend) {
-                if (friend.socketId !== null) {
-                    io.to(friend.socketId).emit('newMemberOnline', user);
-                }
-            }, this);
-        })
+            .populate('friends')
+            .populate('friendRequest')
+            .then(function (user) {
+                io.to(socket.id).emit('userList', user.friends);
+                io.to(socket.id).emit('newFriendRequest', user.friendRequest);
+                user.friends.forEach(function (friend) {
+                    if (friend.socketId !== null) {
+                        console.log("newMemberOnline")
+                        io.to(friend.socketId).emit('newMemberOnline', user);
+                    }
+                }, this);
+            })
     }
 
     // io.to(socket.id).emit('newFriendRequest','You got new Friend request')
 
     socket.on("disconnect", function () {
-        console.log("Disconnected");
+        User.findByIdAndUpdate(socket.handshake.session.passport.user, { $set: { status: 'Offline', socketId: null } })
+            .populate('friends')
+            .then(function (user) {
+                console.log("User Logged Out");
+                user.friends.forEach(function (friend) {
+                    if (friend.socketId !== null) {
+                        console.log("newMemberOffline")
+                        io.to(friend.socketId).emit('newMemberOffline', user);
+                    }
+                }, this);
+            })
     });
 });
 

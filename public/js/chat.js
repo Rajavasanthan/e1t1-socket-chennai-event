@@ -61,4 +61,10 @@ $(document).ready(function () {
         $("#user-" + friend._id + " > .wrap > span").removeClass('Offline');
         $("#user-" + friend._id + " > .wrap > span").addClass('Online');
     });
+
+    socket.on("newMemberOffline", function (friend) {
+        console.log("newMemberOnline")
+        $("#user-" + friend._id + " > .wrap > span").removeClass('Online');
+        $("#user-" + friend._id + " > .wrap > span").addClass('Offline');
+    });
 })

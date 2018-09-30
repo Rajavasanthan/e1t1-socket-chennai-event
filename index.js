@@ -20,7 +20,7 @@ var { Message } = require('./models/messages');
 const passport = require('passport');
 
 app.set('view engine', 'ejs');
-app.set('port', process.env.port || 3005);
+app.set('port', process.env.PORT || 3005);
 app.use(express.static('public'));
 
 var chatSession = session({

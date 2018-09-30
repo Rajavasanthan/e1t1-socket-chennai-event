@@ -6,16 +6,8 @@ const socketIO = require('socket.io');
 const http = require('http');
 const server = http.createServer(app);
 const io = socketIO(server);
+const sharedSession = require('express-socket.io-session');
 
-io.on('connection',function(socket){
-    console.log("Connected");
-    console.log(socket.id);
-
-
-    socket.on("disconnect",function(){
-        console.log("Disconnected");
-    });
-});
 
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
@@ -35,6 +27,35 @@ var chatSession = session({
     resave: true,
     saveUninitialized: true,
     store: new MongoStore({ mongooseConnection: mongoose.connection })
+});
+
+
+io.use(sharedSession(chatSession, {
+    autoSave: true
+}));
+
+io.on('connection', function (socket) {
+    console.log("Connected");
+    if(socket.handshake.session.passport){
+        User.findByIdAndUpdate(socket.handshake.session.passport.user, { $set: { status: 'Online', socketId: socket.id } })
+        .populate('friends')
+        .populate('friendRequest')
+        .then(function (user) {
+            io.to(socket.id).emit('userList', user.friends);
+            io.to(socket.id).emit('newFriendRequest', user.friendRequest);
+            user.friends.forEach(function (friend) {
+                if (friend.socketId !== null) {
+                    io.to(friend.socketId).emit('newMemberOnline', user);
+                }
+            }, this);
+        })
+    }
+
+    // io.to(socket.id).emit('newFriendRequest','You got new Friend request')
+
+    socket.on("disconnect", function () {
+        console.log("Disconnected");
+    });
 });
 
 app.use(chatSession);
@@ -59,8 +80,8 @@ function isLoggedIn(req, res, next) {
 }
 
 passport.use(new FacebookStatergy({
-    clientID: process.env.FB_CLIENT_ID || '528230584255234',
-    clientSecret: process.env.FB_SECRET || '527b5d836ce4adc0e453fda88415a939',
+    clientID: process.env.FB_CLIENT_ID || '369458576832405',
+    clientSecret: process.env.FB_SECRET || 'ec7a902660045d79e3606088dfe8389d',
     profileFields: ['email', 'displayName', 'photos'],
     callbackURL: process.env.FB_CALLBACK || 'http://localhost:' + app.get('port') + '/auth/facebook/callback',
     passReqToCallback: true,

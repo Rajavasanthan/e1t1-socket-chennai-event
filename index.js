@@ -167,7 +167,7 @@ passport.use(new FacebookStatergy({
     clientID: process.env.FB_CLIENT_ID || '369458576832405',
     clientSecret: process.env.FB_SECRET || 'ec7a902660045d79e3606088dfe8389d',
     profileFields: ['email', 'displayName', 'photos'],
-    callbackURL: process.env.FB_CALLBACK || 'http://localhost:' + app.get('port') + '/auth/facebook/callback',
+    callbackURL: process.env.FB_CALLBACK || 'https://e1t1nodechat.herokuapp.com/auth/facebook/callback',
     passReqToCallback: true,
     enableProof: true
 }, (req, token, refreshToken, profile, done) => {

@@ -16,10 +16,11 @@ mongoose.Promise = global.Promise;
 
 mongoose.connect("mongodb://vasanth:vasanth7788@ds119273.mlab.com:19273/e1t1-chennai-socket");
 var { User } = require('./models/user');
+var { Message } = require('./models/messages');
 const passport = require('passport');
 
 app.set('view engine', 'ejs');
-app.set('port', 3005);
+app.set('port', process.env.port || 3005);
 app.use(express.static('public'));
 
 var chatSession = session({
@@ -52,6 +53,24 @@ io.on('connection', function (socket) {
             })
     }
 
+    app.get("/get_msg_by_friendid/:friendId",function(req,res){
+        Message.find({
+            participents: {
+                $all: [req.user._id, req.params.friendId]
+            }
+        })
+        .populate('sentBy',{ _id: 1, userImage: 1 })
+        .populate('recivedBy',{ _id: 1, userImage: 1 })
+        .exec()
+        .then((message) => {
+            return User.findByIdAndUpdate(req.user._id, { $set: { currentFriend: req.params.friendId } }).then((currentUser) => {
+                return { message }
+            });
+        })
+        .then((data) => {
+            res.json(data.message);
+        })
+    });
     // io.to(socket.id).emit('newFriendRequest','You got new Friend request')
 
     socket.on("disconnect", function () {

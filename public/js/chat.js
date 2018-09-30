@@ -1,5 +1,11 @@
 var socket = io();
 $(document).ready(function () {
+
+    $("#welcome-screen").css('display', 'block');
+    $("#chat-screen").css('display', 'none');
+    $("#chat-screen-loading").css('display', 'none');
+
+
     socket.on('connect', function () {
         console.log("Connected");
     });
@@ -68,3 +74,51 @@ $(document).ready(function () {
         $("#user-" + friend._id + " > .wrap > span").addClass('Offline');
     });
 })
+
+function displayMessage(message) {
+    if ($("#current-friend-id").val() == message.sentBy._id) {
+        var msgType = "sent";
+        var image = message.sentBy.userImage;
+    } else {
+        var msgType = "replies";
+        var image = message.sentBy.userImage;
+    }
+    $('<li class="' + msgType + '"><img src="' + image + '" alt="" /><p>' + message.message + '</p></li>').appendTo($('.messages ul'));
+    $('#message').val(null);
+    $('.contact.active .preview').html('<span>You: </span>' + message);
+    console.log($(document).height());
+    $(".messages").animate({ scrollTop: 999999 }, "fast");
+}
+
+function populateMessage(messageData) {
+    if (messageData.length == undefined) {
+        displayMessage(messageData);
+    } else {
+        messageData.forEach(function (message) {
+            displayMessage(message);
+        }, this);
+
+    }
+}
+
+function getMessages(friendId, friendFullName, friendImage) {
+    $("#chat-screen").css('display', 'none');
+    $("#friend-image").attr('src', friendImage);
+    $("#friend-name").html(friendFullName);
+    $("#current-friend-id").val(friendId);
+
+    $("#welcome-screen").css('display', 'none');
+    $("#chat-screen-loading").css('display', 'block');
+
+    $.ajax({
+        method: "GET",
+        url: "/get_msg_by_friendid/" + friendId
+    })
+        .done(function (messages) {
+            $("#chat-screen").css('display', 'block');
+            $("#chat-screen-loading").css('display', 'none');
+            $('#message-list').empty();
+            populateMessage(messages);
+            console.log(messages);
+        })
+}
